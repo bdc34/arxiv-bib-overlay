@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Paper } from '../api/document'
+import { Paper } from '../Types'
 import { Outbound } from './Outbound'
 
 /** Renders a single paper as a citation/reference line. */

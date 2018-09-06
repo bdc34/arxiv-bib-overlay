@@ -2,13 +2,22 @@
 * DONE get loading from Inspire working
 * DONE get sorting working
 * DONE get paging working
-* TODO rename document.ts and add docs
-* TODO test with ADS
-* TODO convert S2 data source
+* TODO Error handling: HTTP non-200, network errors, empyt query results, response handling errors
 * TODO get paper id and categories from html
+* DONE rename document.ts and add docs
+* TODO test with ADS
+Switched to localhost:8000 which was in ADS's allowed origin list.
+But now it looks like the queries just doesn't return anything.
+I'm guessing that I have the arxiv identifier wrong somehow.
+
+* TODO convert S2 data source
+* TODO loading animation
 * TODO get avaiable/unavaiable loading from datasources working 
+At the same time deal with the hardcoded Inspire DataSource in BibModel.
+
 * TODO get 'filter' on ColumnView working
 * TODO try as a browser plugin
 * TODO try as a bookmarklet
 * TODO ask Matt about what is in static/biboverlay.js
 * TODO Remove static directory
+* TODO url proxy isn't implemented 

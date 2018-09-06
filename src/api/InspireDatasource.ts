@@ -2,13 +2,12 @@ import icon from '../assets/icon-inspire.png'
 import sourceLogo from '../assets/source-inspire.png'
 import { API_ARTICLE_COUNT } from '../bib_config'
 import { encodeQueryData, urlproxy } from '../bib_lib'
-import {  BasePaper, DataSource, Paper } from './document'
+import {  BasePaper, DataSource, Paper } from '../Types'
 import { InspireToPaper } from './InspireFromJson'
 
 export class InspireDatasource implements DataSource {
     ready = {}    
-    cache: { [key: string]: Paper} = {}
-    aid: string
+    cache: { [key: string]: Paper} = {}    
 
     data: BasePaper
     
@@ -100,12 +99,11 @@ export class InspireDatasource implements DataSource {
     }   
     
     /** Fetches base, citations and references, then populates this InspireDatasource. */
-    fetch_all(arxiv_id: string): Promise<InspireDatasource> {
-        this.aid = arxiv_id
+    fetch_all(arxiv_id: string): Promise<InspireDatasource> {        
         return Promise.all(
-            [this.fetch_docs('eprint:' + this.aid,  0),
-            this.fetch_docs('refersto:eprint:' + this.aid, 0 ),
-            this.fetch_docs('citedby:eprint:' + this.aid, 0 )]
+            [this.fetch_docs('eprint:' + arxiv_id,  0),
+            this.fetch_docs('refersto:eprint:' + arxiv_id, 0 ),
+            this.fetch_docs('citedby:eprint:' + arxiv_id, 0 )]
         ).then((results) => {
             const [base, citations, references] = results
             this.populate( base[0], citations, references )          

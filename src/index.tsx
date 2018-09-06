@@ -32,6 +32,8 @@ ReactDOM.render(
 registerServiceWorker()
 
 //Kicsk off async request
-bibModel.loadFromPaper('0801.1021', 'unknown for now')
+//bibModel.loadFromPaper('1808.07853', 'unknown') //ads
+bibModel.loadFromPaper('0801.1021', 'unknown for now')//inspire
+
 // bibModel.inspireDs.fetch_all('0801.1021')
 //   .then(ds => { bibModel.currentDs = ds; bibModel.paper = ds.data })

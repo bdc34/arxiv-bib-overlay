@@ -2,15 +2,14 @@ import sourceIcon from '../assets/icon-ads.png'
 import sourceLogo from '../assets/source-ads.png'
 import { API_ARTICLE_COUNT } from '../bib_config'
 import { encodeQueryData, urlproxy } from '../bib_lib'
-import { AdsToPaper } from './AdsFromJson'
 //import { urlproxy } from '../bib_lib'
-import {  BasePaper, DataSource, Paper } from './document'
+import {  BasePaper, DataSource, Paper } from '../Types'
+import { AdsToPaper } from './AdsFromJson'
 
 /** Class to fetch references from ADS. */
 export class AdsDatasource implements DataSource {
     ready = {}
     cache: {[key: string]: Paper} = {}
-    aid: string 
 
     data: BasePaper
 
@@ -30,7 +29,7 @@ export class AdsDatasource implements DataSource {
     api_url = `${this.base_url}/v1/search/query`
     api_key = '3vgYvCGHUS12SsrgoIfbPhTHcULZCByH8pLODY1x'
     api_params = {
-        p: 'a query',
+        q: 'a query',
         fl: [
             'id', 'pub', 'bibcode', 'title', 'author', 'bibstem',
             'year', 'doi', 'citation_count', 'read_count', 'identifier'
@@ -81,7 +80,7 @@ populate( base: BasePaper, citations: Paper[], references: Paper[] ): void {
 
 fetch_params( query: string, index: number ): string {                
         const params = { ...this.api_params }        
-        params.p = query        
+        params.q = query        
         return encodeQueryData(params)
     }
     
@@ -91,16 +90,16 @@ fetch_docs(query: string, index: number ): Promise < any > {
         //TODO need          var auth = 'Bearer '+this.api_key;
         // and add that s a request header        
         //xhr.setRequestHeader('Authorization', auth);
-        return fetch( urlproxy(url) )
+        return fetch( urlproxy(url), 
+                      {method: 'GET',  headers: {Authorization: `Bearer ${this.api_key}`}} )
             .then(resp => resp.json())
             .then(json => this.json_to_doc.reformat_documents(json) )
     }   
     
     /** Fetches base, citations and references, then populates this InspireDatasource. */
-fetch_all(arxiv_id: string): Promise < AdsDatasource > {
-        this.aid = arxiv_id
+fetch_all(arxiv_id: string): Promise < AdsDatasource > {        
         return Promise.all(
-            [this.fetch_docs(`'arXiv:${arxiv_id}`,  0),
+            [this.fetch_docs(`'arXiv${arxiv_id}`,  0),
             this.fetch_docs(`citations(arXiv:${arxiv_id})`, 0 ),
             this.fetch_docs(`references(arXiv:${arxiv_id})`, 0 )]
         ).then((results) => {

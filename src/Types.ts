@@ -1,14 +1,7 @@
-
+/** Class for an author on a paper. */
 export class Author {
     name: string
-    url: string
-
-    tolastname() {
-        const name = this.name || ''
-        const parts = name.split(' ')
-        return parts[ parts.length - 1 ]
-    }
-
+    url: string    
 }
 
 export class Paper {
@@ -19,23 +12,34 @@ export class Paper {
     citation_count: number
     recid: string
     paperId: string
+
+    /** Index of this paper in Citations or References. */
     index: number
+        
+    /** URL to search for this paper in the DS i originated from. */
     api: string
+
+    /** URL to this paper in the DS it originated from. */
     url: string
+    
     doi: string
     arxivId?: string 
     url_doi: string
+
+    /** URL to this papers abs page at arxiv.org. */
     url_arxiv?: string
 
     searchline: string
+
+    /** Types of outbound links that should exist for this paper.  */
     outbound: string[]    
     
     constructor( arxivId?: string) {
         this.arxivId = arxivId
     }
-
 }
 
+/** Group of papers. Used for references and citations. */
 export class PaperGroup {
     documents: Paper[]
     header: string
@@ -45,11 +49,13 @@ export class PaperGroup {
     sorting: SorterConfig
 }
 
+/** A paper with citations and references. */
 export class BasePaper extends Paper {
     citations?: PaperGroup
     references?: PaperGroup
 }
 
+/** Configuration of sorting for a DataSource. */
 export interface SorterConfig {
     sorters: {[name: string]: Sorter}
     sorters_order: string[]
@@ -61,11 +67,8 @@ export interface Sorter {
     func: (paper: Paper) => string | number
 }
 
-export interface DataSource {    
-    ready: object
-    cache: { [key: string]: Paper}
-    aid: string
-
+export interface DataSource {        
+    /* Paper last fetched. */
     data: BasePaper
     
     /** Logo image, use in TSX like <img src={ds.logo}/> */     
@@ -78,6 +81,7 @@ export interface DataSource {
     longname: string 
     homepage: string
 
+    /** Categories that this DataSource is likely to have papers for. */
     categories: Set<string> //= new Set(['hep-th', 'hep-ex', 'hep-ph', 'hep-lat', 'gr-qc'])
         
     api_url: string
@@ -85,5 +89,11 @@ export interface DataSource {
 
     sorting: SorterConfig
 
+    /** 
+     * Fetch the paper for the arxiv_id, parse it and put it in this.data.
+     * 
+     * Could change this to not put it in this.data and just return a Promise to the
+     * paper.
+     */
     fetch_all(arxiv_id: string): Promise<DataSource>
 }    

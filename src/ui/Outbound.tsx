@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { Paper } from '../api/document'
 import adsIcon from '../assets/icon-ads.png'
 import arxivIcon from '../assets/icon-arxiv.png'
 import citeIcon from '../assets/icon-cite.png'
@@ -9,6 +8,7 @@ import s2Icon from '../assets/icon-s2.png'
 import scholarIcon from '../assets/icon-scholar.png'
 import { API_SCHOLAR_SEARCH } from '../bib_config'
 import { encodeQueryData } from '../bib_lib'
+import { Paper } from '../Types'
 
 const _link = ( name: string, desc: string, url: string|undefined, icon: any) => 
     ! url ? null : (<span key={name + url}><a className={name} title={desc} href={url}><img src={icon}/></a></span>)

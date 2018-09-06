@@ -1,7 +1,7 @@
 import { action, observable } from 'mobx'
 import { AdsDatasource } from '../api/AdsDatasource'
-import { DataSource, Paper, PaperGroup } from '../api/document'
 import { InspireDatasource } from '../api/InspireDatasource'
+import { DataSource, Paper, PaperGroup } from '../Types'
 
 export class BibModel {    
     @observable
@@ -25,6 +25,9 @@ export class BibModel {
     @observable
     references: PaperGroup
 
+    @observable
+    errorWhileLoading = false
+
     @action
     loadFromPaper( arxivId: string, categories: string): void {    
         //TODO:
@@ -34,6 +37,9 @@ export class BibModel {
         
         this.inspireDs.fetch_all('0801.1021')
             .then(ds => this.populateFromDsResult(ds) )        
+        //this.adsDs.fetch_all(arxivId)
+            //.then( ds => this.populateFromDsResult(ds))
+            //.catch( error => this.errorWhileLoading = true)
     }
 
     populateFromDsResult( ds: DataSource ): void {

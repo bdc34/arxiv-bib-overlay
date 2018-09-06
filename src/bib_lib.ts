@@ -1,4 +1,5 @@
 import { URL_PROXY } from './bib_config'
+import { Author } from './Types'
 
 // BDC functions to access arxiv abs page info moved to arxiv_page.ts
 
@@ -20,6 +21,12 @@ export function urlproxy(url: string) {
         return URL_PROXY + '?url=' + encodeURIComponent(url)
     }
     return url
+}
+
+export function tolastname(au: Author) {
+    const name = au.name || ''
+    const parts = name.split(' ')
+    return parts[ parts.length - 1 ]
 }
 
 // BDC Doesn't seem used, save to get rid of

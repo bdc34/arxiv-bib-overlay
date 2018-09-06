@@ -1,8 +1,8 @@
 import { computed, observable } from 'mobx'
 import { observer } from 'mobx-react'
 import * as React from 'react'
-import { Paper, PaperGroup, SorterConfig } from '../api/document'
 import { PAGE_LENGTH } from '../bib_config'
+import { Paper, PaperGroup, SorterConfig } from '../Types'
 import { sorter } from './ColumnSorter'
 import { PaperDiv } from './PaperDiv'
 

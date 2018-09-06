@@ -1,7 +1,7 @@
 import { RE_IDENTIFIER } from '../arxiv_page'
 import { encodeQueryData } from '../bib_lib'
+import { Author, Paper } from '../Types'
 import { AdsDatasource } from './AdsDatasource'
-import { Author, Paper } from './document'
 
 /* Class to convert JSON from Inspire to a Paper. */
 export class AdsToPaper {

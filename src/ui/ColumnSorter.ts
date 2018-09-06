@@ -1,4 +1,4 @@
-import { Paper } from '../api/document'
+import { Paper } from '../Types'
 
 /** 
  * Function to sort Papers for ColumnView.
