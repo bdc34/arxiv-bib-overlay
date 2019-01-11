@@ -99,7 +99,7 @@ export function OutboundScholar() {
 
     return (
         <div className='bib-outbound' style={{margin: '0.3em'}}>
-            <a href={url} target='_blank'>Google Scholar</a>
+            <a href={url} target='_blank' rel='noopener'>Google Scholar</a>
         </div>
     )
 }

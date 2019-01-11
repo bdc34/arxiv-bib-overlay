@@ -113,8 +113,8 @@ export class ColumnView extends React.Component<{dataSource: DataSource, paperGr
         )
         const star = (
             N === datasource.max_count ?
-            <a title={aside} href={group.header_url} target='_blank'
-            className='bib-col-title bib-star' style={{color: 'red'}}>*</a> : null
+            <a title={aside} href={group.header_url} target='_blank' rel='noopener'
+               className='bib-col-title bib-star' style={{color: 'red'}}>*</a> : null
         )
 
         const utils = (
@@ -139,7 +139,7 @@ export class ColumnView extends React.Component<{dataSource: DataSource, paperGr
                     <span>(<a href={mailto}>report data issues</a>)</span>
                   </div>
                   <div className='bib-branding-logo'>
-                    <a target='_blank' href={datasource.homepage}>
+                    <a href={datasource.homepage} target='_blank' rel='noopener'> 
                       <img alt={datasource.longname} src={datasource.logo} height='32px' width='auto'/>
                     </a>
                   </div>
