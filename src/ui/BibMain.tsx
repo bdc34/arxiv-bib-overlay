@@ -21,16 +21,15 @@ export class BibMain extends React.Component<{state: State}, {}> {
         }
 
         const sources = bib.availableDS.map(
-            (i): JSX.Element => {
+            (i) => {
                 if (bib.currentDS === i) {
                     return <span className='bib-selected'>{i.longname}</span>
                 } else {
                     return <span><a href='javascript:;' onClick={() => bib.setDS(i)}>{i.longname}</a></span>
                 }
             }
-        ).reduce(
-            (accu, elem) => accu === null ? elem : (<span>{accu}<span> | </span>{elem}</span>)
-        )
+        ).reduce((accu, elem) => ( accu === null ?
+            elem : <React.Fragment>{accu} | {elem}</React.Fragment>))
 
         return (<span><span>Select data provider: </span>{sources}</span>)
     }
