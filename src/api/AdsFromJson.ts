@@ -1,4 +1,4 @@
-import * as unidecode from 'unidecode'
+//import * as unidecode from 'unidecode'
 import { RE_IDENTIFIER } from '../arxiv_page'
 import { encodeQueryData, remove_puctuation } from '../bib_lib'
 import { AdsDatasource } from './AdsDatasource'
@@ -28,8 +28,12 @@ export class AdsToPaper {
         return this.ads_url_part('bibcode', bib)
     }
 
-    ads_url_bibcode(bib: string) {
-        return `${this.fetchConfig.base_url}/#abs/${bib}`        
+    ads_url_api(bib: string) {
+        return `${this.fetchConfig.base_url}/#abs/${bib}`
+    }
+
+    ads_url_outbound(bib: string) {
+        return `${this.fetchConfig.outbound_url}/#abs/${bib}`
     }
 
     ads_url_arxiv(identifiers: string[]) {
@@ -86,7 +90,7 @@ export class AdsToPaper {
     searchline(doc: Paper) {        
         const auths = doc.authors.reduce((acc, au) => acc + au.name +  ' ', '')
         const line = [doc.title, auths, doc.venue, doc.year].join(' ').toLocaleLowerCase()
-        return line + ' ' + unidecode(line)
+        return line // + ' ' + unidecode(line)
     }
 
     outbound_names(ref: Paper) {
@@ -103,8 +107,8 @@ export class AdsToPaper {
         const newdoc: Paper = new Paper(arxivid)
         newdoc.title = this.reformat_title(json.title)
         newdoc.authors = this.reformat_authors(json.author)
-        newdoc.api = this.ads_url_bibcode(json.bibcode)
-        newdoc.url = newdoc.api
+        newdoc.api = this.ads_url_api(json.bibcode)
+        newdoc.url = this.ads_url_outbound(json.bibcode)
         newdoc.url_arxiv = this.ads_url_arxiv(json.identifier)
         newdoc.doi = (json.doi || [''])[0]
         newdoc.url_doi = this.ads_url_doi(json)

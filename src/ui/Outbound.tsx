@@ -1,11 +1,11 @@
 import * as React from 'react'
 import { Paper } from '../api/document'
-import { get_article_info } from '../arxiv_page'
 import adsIcon from '../assets/icon-ads.png'
 import arxivIcon from '../assets/icon-arxiv.png'
 import citeIcon from '../assets/icon-cite.png'
 import doiIcon from '../assets/icon-doi.png'
 import inspireIcon from '../assets/icon-inspire.png'
+import prophyIcon from '../assets/icon-prophy.png'
 import s2Icon from '../assets/icon-s2.png'
 import scholarIcon from '../assets/icon-scholar.png'
 import { API_SCHOLAR_SEARCH } from '../bib_config'
@@ -19,7 +19,8 @@ function google_scholar_query(paper: Paper) {
         auth = paper.authors[0].tolastname()
     }
 
-    const query = `${paper.title} ${auth} ${paper.year}`
+    const venue = paper.venue ? paper.venue : ''
+    const query = `${paper.title} ${auth} ${venue} ${paper.year}`
     const encoded = encodeQueryData({q: query})
     return `${API_SCHOLAR_SEARCH}?${encoded}`
 }
@@ -55,6 +56,7 @@ const _modal = (name: string, desc: string, paper: Paper, icon: any) => {
 const make_link = {
     ads(ref: Paper) {return _link('ads', 'NASA ADS', ref.url, adsIcon )},
     s2(ref: Paper) {return _link('s2', 'Semantic Scholar', ref.url, s2Icon)},
+    prophy(ref: Paper) {return _link('prophy', 'Prophy', ref.url, prophyIcon)},
     inspire(ref: Paper) {return _link('inspire', 'Inspire HEP', ref.url, inspireIcon)},
     arxiv(ref: Paper) {return _link('arxiv', 'ArXiv article', ref.url_arxiv, arxivIcon, false)},
     doi(ref: Paper) {return _link('doi', 'Journal article', ref.url_doi, doiIcon)},
@@ -91,15 +93,25 @@ export class OutboundCite extends React.Component<{paper: Paper}, {}> {
     }
 }
 
-export function OutboundScholar() {
-    const info = get_article_info()
-    const line = `${info.title} ${info.author.split(',')[0]} ${info.year}`
-    const query = encodeQueryData({q: line})
-    const url = `${API_SCHOLAR_SEARCH}?${query}`
+function SidebarReference(paper: Paper) {
+    if (!paper.arxivId && !paper.doi) {
+        return (<span></span>)
+    }
+
+    return (<a href='javascript:void(0)' title={paper.arxivId} onClick={() => cite_modal(paper)}>Export citation</a>)
+}
+
+export function OutboundNoData(paper: Paper) {
+    if (!paper) { return (<div></div>) }
+
+    const url = google_scholar_query(paper)
+    const ref = SidebarReference(paper)
 
     return (
-        <div className='bib-outbound' style={{margin: '0.3em'}}>
-            <a href={url} target='_blank' rel='noopener'>Google Scholar</a>
-        </div>
+      <div className='bib-outbound' style={{margin: '0.3em'}}>
+        {ref}
+        <br/>
+        <a href={url} target='_blank' rel='noopener'>Google Scholar</a>
+      </div>
     )
 }

@@ -1,8 +1,8 @@
 import icon from '../assets/icon-s2.png'
 import sourceLogo from '../assets/source-s2.png'
-import { encodeQueryData } from '../bib_lib'
+import { CATEGORIES, DataError, encodeQueryData, QueryError, RateLimitError } from '../bib_lib'
 import { api_bucket } from '../leaky_bucket'
-import { BasePaper, DataSource, DOWN, QueryError, UP } from './document'
+import { BasePaper, DataSource, DOWN, PaperGroup, UP } from './document'
 import { S2ToPaper } from './S2FromJson'
 
 export class S2Datasource implements DataSource {
@@ -15,9 +15,10 @@ export class S2Datasource implements DataSource {
 
     max_count = 999
     email = 'feedback@semanticscholar.org'
+    help = `mailto:${this.email}`
     shortname = 'S2'
     longname = 'Semantic Scholar'
-    categories = new Set(['cs', 'stat.ML'])
+    categories = CATEGORIES
     homepage = 'https://semanticscholar.org'
     api_url = 'https://api.semanticscholar.org/v1/'
     api_params = {include_unknown_references: 'true'}
@@ -47,6 +48,39 @@ export class S2Datasource implements DataSource {
         return `${this.api_url}paper/arXiv:${arxivid}?${params}`
     }
 
+    portion_unknown(papers: PaperGroup | undefined) {
+        let total = 0
+        let count = 0
+
+        if (!papers || !papers.documents || papers.documents.length === 0) {
+            return 0
+        }
+
+        for (const p of papers.documents) {
+            if (!p.paperId) {
+                count += 1
+            }
+            total += 1
+        }
+
+        return count  / total
+    }
+
+    title_check(papers: PaperGroup) {
+        const cutoff = 6
+        let count = 0
+        let total = 0
+
+        for (const doc of papers.documents) {
+            if (doc.title && doc.title.length < cutoff) {
+                count += 1
+            }
+            total += 1
+        }
+
+        return count / total
+    }
+
     populate(json: any) {
         const output: BasePaper = this.json_to_doc.reformat_document(json, 0)
 
@@ -59,6 +93,12 @@ export class S2Datasource implements DataSource {
                 count: json.citations.length,
                 sorting: this.sorting,
             }
+            const titles = Number(this.title_check(output.citations).toFixed(2))
+            if (titles > 0.6) {
+                throw new DataError(
+                    `Few known citation titles from provider (${titles}).`
+                )
+            }
         }
 
         if (json.references) {
@@ -70,6 +110,27 @@ export class S2Datasource implements DataSource {
                 count: json.references.length,
                 sorting: this.sorting,
             }
+
+            const titles = Number(this.title_check(output.references).toFixed(2))
+            if (titles > 0.6) {
+                throw new DataError(
+                    `Few known reference titles from provider (${titles}).`
+                )
+            }
+        }
+
+        if (output.references === undefined || (output.references && output.references.count === 0)) {
+            throw new DataError(
+                'No references available from data provider.'
+            )
+        }
+
+        const pref = Number(this.portion_unknown(output.references).toFixed(2))
+        const pcit = Number(this.portion_unknown(output.citations).toFixed(2))
+        if (pref > 0.95 || pcit > 0.95) {
+            throw new DataError(
+                `Few known references from provider (unk=${Math.max(pref, pcit)}).`
+            )
         }
 
         this.data = output
@@ -92,13 +153,7 @@ export class S2Datasource implements DataSource {
                     this.loaded = true
                     return this
                 })
-        ).catch((e) => {
-            if (e instanceof QueryError) {
-                throw e
-            } else {
-                throw new Error('Too many requests, please try again in a few seconds.')
-            }
-        })
+        ).catch((e) => {throw e})
     }
 }
 
@@ -111,7 +166,9 @@ function error_check(response: Response) {
         case 0:
             throw new QueryError('Query prevented by browser -- CORS, firewall, or unknown error')
         case 404:
-            throw new QueryError('No data available yet')
+            throw new DataError('No data available from data provider, 404.')
+        case 429:
+            throw new RateLimitError('Too many requests, please try again in a few seconds.')
         case 500:
             throw new QueryError('Query error 500: internal server error')
         default:

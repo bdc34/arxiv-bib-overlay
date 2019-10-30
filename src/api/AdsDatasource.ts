@@ -1,9 +1,12 @@
 import sourceIcon from '../assets/icon-ads.png'
 import sourceLogo from '../assets/source-ads.png'
-import { API_ARTICLE_COUNT } from '../bib_config'
-import { encodeQueryData } from '../bib_lib'
+import { POLICY_ADS_OAUTH_SERVICE } from '../bib_config'
+import { DataError, encodeQueryData, QueryError } from '../bib_lib'
+import { api_bucket } from '../leaky_bucket'
 import { AdsToPaper } from './AdsFromJson'
-import {  BasePaper, DataSource, DOWN, Paper, QueryError, UP } from './document'
+import {  BasePaper, DataSource, DOWN, Paper, UP } from './document'
+
+const ADS_API_COUNT = 100
 
 /** Class to fetch references from ADS. */
 export class AdsDatasource implements DataSource {
@@ -17,26 +20,26 @@ export class AdsDatasource implements DataSource {
     logo = sourceLogo
 
     email = 'adshelp@cfa.harvard.edu'
+    help = `mailto:${this.email}`
     shortname = 'ADS'
     longname = 'NASA ADS'
-    categories = new Set([
-        'astro-ph', 'cond-mat', 'gr-qc', 'hep-ex', 'hep-lat',
-        'hep-ph', 'hep-th', 'nlin', 'nucl-ex',
-        'nucl-th', 'physics', 'quant-ph'
-    ])
+    categories = new Set(['astro-ph', 'cond-mat', 'gr-qc'])
 
-    max_count = API_ARTICLE_COUNT
+    max_count = ADS_API_COUNT
     base_url = 'https://api.adsabs.harvard.edu'
     homepage = 'https://ui.adsabs.harvard.edu'
+    outbound_url = 'https://ui.adsabs.harvard.edu'
+    token_url = 'https://bibex-ads-token.development.arxiv.org/token'
     api_url = `${this.base_url}/v1/search/query`
     api_key = '3vgYvCGHUS12SsrgoIfbPhTHcULZCByH8pLODY1x'
+
     api_params = {
         q: 'a query',
         fl: [
             'id', 'pub', 'bibcode', 'title', 'author', 'bibstem',
             'year', 'doi', 'citation_count', 'read_count', 'identifier'
         ],
-        rows: API_ARTICLE_COUNT,
+        rows: ADS_API_COUNT,
         sort: 'citation_count desc',
     }
 
@@ -60,7 +63,7 @@ export class AdsDatasource implements DataSource {
         sorters_default: 'citations'
     }
 
-    ads_url_ui = `${this.base_url}/#search/`
+    ads_url_ui = `${this.outbound_url}/#search/`
 
     json_to_doc = new AdsToPaper(this)
 
@@ -82,13 +85,21 @@ export class AdsDatasource implements DataSource {
             count: references.length,
             sorting: this.sorting
         }
+
+        const ncites = output.citations.count
+        const nrefs = output.references.count
+
+        if (nrefs === 0 || (ncites === 0 && nrefs === 0)) {
+            throw new DataError('No references or citations provided by data provider.')
+        }
+
         this.data = output
     }
 
     get_credentials(): Promise<void> {
         const credstr: 'include' = 'include'
         const options = {credentials: credstr}
-        return fetch('http://abovl.us-east-1.elasticbeanstalk.com/token', options)
+        return fetch(this.token_url, options)
             .catch((e) => {throw new QueryError('Token query prevented by browser - CORS, firewall, or unknown error')})
             .then(resp => error_check_token(resp))
             .then(resp => resp.json())
@@ -106,21 +117,23 @@ export class AdsDatasource implements DataSource {
         const url = `${this.api_url}?${this.fetch_params(query , index)}`
         //const modestr: 'no-cors' = 'no-cors'
         //const headers = {mode: modestr, headers: {Authorization: `Bearer ${this.api_key}`}}
-        //const headers = {headers: {Authorization: `Bearer ${this.credentials}`}}
-        const headers = {headers: {Authorization: `Bearer ${this.api_key}`}}
+        const credentials = POLICY_ADS_OAUTH_SERVICE ? this.credentials : this.api_key
+        const headers = {headers: {Authorization: `Bearer ${credentials}`}}
 
-        return fetch(url, headers)
+        return api_bucket.throttle(
+            () => fetch(url, headers)
             .catch((e) => {throw new QueryError('Query prevented by browser -- CORS, firewall, or unknown error')})
             .then(resp => error_check(resp))
             .then(resp => resp.json())
             .then(json => this.json_to_doc.reformat_documents(json.response.docs))
+        ).catch((e) => {throw e})
     }
 
     /* Fetches base, citations and references, then populates this InspireDatasource. */
     fetch_all(arxiv_id: string): Promise <AdsDatasource> {
-        /*if (!this.credentials) {
+        if (POLICY_ADS_OAUTH_SERVICE && !this.credentials) {
             return this.get_credentials().then(() => this.fetch_all(arxiv_id))
-        }*/
+        }
 
         if (this.loaded) {
             return new Promise<AdsDatasource>((resolve, reject) => resolve(this))
@@ -151,7 +164,9 @@ function error_check(response: Response) {
         case 401:
             throw new QueryError('Query authentication to ADS failed')
         case 404:
-            throw new QueryError('No data available yet')
+            throw new DataError('No data available yet')
+        case 429:
+            throw new QueryError('Too many requests to ADS, rate limit reached for today.')
         case 500:
             throw new QueryError('Query error 500: internal server error')
         default:
@@ -170,7 +185,6 @@ function error_check_token(response: Response) {
         case 404:
             throw new QueryError('Token server (managed by arXiv) not found')
         default:
-            console.log(response)
             throw new QueryError(`Error retrieving ADS API Token ${response.status}`)
     }
 }

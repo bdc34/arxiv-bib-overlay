@@ -19,6 +19,7 @@
 */
 import * as FastMutex from 'fast-mutex'
 import * as CONFIG from './bib_config'
+import { RateLimitError } from './bib_lib'
 
 export class CrossTabLeakyBucket {
     // CONF: size of the slot where capacity tokens can be used in seconds, defaults to 60
@@ -119,10 +120,11 @@ export class CrossTabLeakyBucket {
             waitTime = Math.max((this.waitTime * (1000 * this.refillRate) - (now - this.last)) / 1000, 0)
 
             if (waitTime >= this.maxWaitingTime) {
-                throw new Error(
+                console.log(
                     `Timeout exceeded, too many waiting requests! Would take ${waitTime} seconds to complete, ` +
                     `the max waiting time is ${this.maxWaitingTime}.`
                 )
+                throw new RateLimitError('Too many requests, please try again in a few seconds.')
             } else {
                 this.waitTime += 1
 

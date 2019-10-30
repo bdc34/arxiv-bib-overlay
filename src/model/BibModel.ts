@@ -2,8 +2,9 @@ import { action, observable } from 'mobx'
 import { AdsDatasource } from '../api/AdsDatasource'
 import { DataSource, Paper, PaperGroup } from '../api/document'
 import { InspireDatasource } from '../api/InspireDatasource'
+import { ProphyDatasource } from '../api/ProphyDatasource'
 import { S2Datasource } from '../api/S2Datasource'
-import { get_categories, get_current_article } from '../arxiv_page'
+import { get_categories, get_current_article, get_primary_category, topaper } from '../arxiv_page'
 import { API_STATS_IMAGE, POLICY_DATASOURCE_LIST, POLICY_RECORD_API_STATS } from '../bib_config'
 import { random_id } from '../bib_lib'
 import { cookies } from '../cookies'
@@ -16,9 +17,10 @@ export class BibModel {
 
     @observable
     allDS: DataSource[] = [
+        new S2Datasource(),
         new InspireDatasource(),
         new AdsDatasource(),
-        new S2Datasource()
+        new ProphyDatasource()
     ].filter((i) => POLICY_DATASOURCE_LIST.indexOf(i.shortname.toLowerCase()) >= 0)
 
     @observable
@@ -36,21 +38,12 @@ export class BibModel {
     @observable
     references: PaperGroup
 
-    get_article_category() {
-        const cats: string[][] = get_categories()
-        if (cats && cats.length > 0 && cats[0].length > 0) {
-            return cats[0][0]
-        }
-
-        throw new Error('No primary category found')
-    }
-
-    get_article_id() {
-        return get_current_article()
-    }
+    @observable
+    arxiv_paper: Paper
 
     configureAvailableFromAbstract() {
-        this.configureAvailable(this.get_article_category())
+        this.arxiv_paper = topaper()
+        this.configureAvailable(get_primary_category())
     }
 
     configureAvailable(category: string) {
@@ -72,8 +65,8 @@ export class BibModel {
 
     @action
     loadFromAbtract() {
-        const arxivId = this.get_article_id()
-        const primary = this.get_article_category()
+        const arxivId = get_current_article()
+        const primary = get_primary_category()
         this.loadSource(arxivId, primary)
     }
 
@@ -120,8 +113,8 @@ export class BibModel {
     }
 
     @action
-    populateFromDSError(error: Error): void {
-        state.error(error.message)
+    populateFromDSError(error: any): void {
+        state.error(error)
     }
 
     record_api() {

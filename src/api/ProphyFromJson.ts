@@ -2,20 +2,20 @@
 //import * as unidecode from 'unidecode'
 import { encodeQueryData, remove_puctuation } from '../bib_lib'
 import { Author, Paper } from './document'
-import { S2Datasource } from './S2Datasource'
+import { ProphyDatasource } from './ProphyDatasource'
 
 function remove_title_dates(title: string): string {
-    // Remove things from S2 titles that look like:
+    // Remove things from Prophy titles that look like:
     //      1 1 A pr 2 01 8
     //      1 S ep 2 01 6
     //      2 5 O ct 2 01 6
     return title.replace(/^(?:\d\s*){1,2}(?:[A-Za-z]\s*){2,4}\s*(?:\d\s*){4,}/, '')
 }
 
-export class S2ToPaper {
-    fetchConfig: S2Datasource
+export class ProphyToPaper {
+    fetchConfig: ProphyDatasource
 
-    constructor(fetch_config: S2Datasource) {
+    constructor(fetch_config: ProphyDatasource) {
         this.fetchConfig = fetch_config
     }
 

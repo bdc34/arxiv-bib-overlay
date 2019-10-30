@@ -90,6 +90,7 @@ export interface DataSource {
     max_count: number
 
     email: string
+    help: string
     shortname: string
     longname: string
     homepage: string
@@ -102,11 +103,4 @@ export interface DataSource {
     sorting: SorterConfig
 
     fetch_all(arxiv_id: string): Promise<DataSource>
-}
-
-export class QueryError extends Error {
-    constructor(m: string) {
-        super(m)
-        Object.setPrototypeOf(this, QueryError.prototype)
-    }
 }
